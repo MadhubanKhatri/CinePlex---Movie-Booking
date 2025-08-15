@@ -167,7 +167,7 @@ function SeatSelectionPage({ movie, showtime, selectedSeats, setSelectedSeats, s
       
       // 2. Open Razorpay checkout
       const options = {
-        key: "rzp_test_ARV6EVJQoaSor3", // replace with your Razorpay key id
+        key: "your razorpay key id", // replace with your Razorpay key id
         currency: res.data.order.currency,
         amount: res.data.order.amount,
         name: movie.name,
