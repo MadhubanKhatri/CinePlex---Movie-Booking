@@ -10,6 +10,12 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from django.conf import settings
 import razorpay
+# from google import genai
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+import json
+from meta_ai_api import MetaAI
+
 
 
 # Razorpay client initialization
@@ -18,7 +24,7 @@ razorpay_client = razorpay.Client(
 )
 
 class MoviesListView(ListAPIView):
-    queryset = Movie.objects.all()
+    queryset = Movie.objects.all().order_by('-created_at')
     serializer_class = MovieSerializer
 
 class MovieDetailView(RetrieveAPIView):
@@ -35,7 +41,6 @@ class SeatBooking(CreateAPIView):
     serializer_class = BookingSerializer
 
     def perform_create(self, serializer):
-        print("🚀 Validated booking data:", serializer.validated_data)
         serializer.save()
 
 class UserCreateView(CreateAPIView):
@@ -43,7 +48,6 @@ class UserCreateView(CreateAPIView):
     serializer_class = UserSerializer
 
     def perform_create(self, serializer):
-        print("🚀 Validated user data:", serializer.validated_data)
         serializer.save()
 
 class UserListView(ListAPIView):
@@ -61,18 +65,21 @@ class UserDetailView(RetrieveAPIView):
 class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data,
-                                           context={'request': request})    
+                                           context={'request': request})  
 
+        print("request.data: ",request.data)  
         try:
             serializer.is_valid(raise_exception=True)
             user = serializer.validated_data['user']
             token, created = Token.objects.get_or_create(user=user)
+            
             return Response({
             'token': token.key,
             'user_id': user.id,
             'email': user.email,
             'username': user.username
             })
+            
         except ValidationError as e:
             # Custom validation response
             return Response({
@@ -155,7 +162,6 @@ class CreateRazorpayOrderAPIView(APIView):
         amount = request.data.get('amount')
         currency = request.data.get('currency', 'INR')
         receipt = request.data.get('receipt', None)
-        print("🚀 Creating Razorpay order with data:", request.data)
         
         if not amount:
             return Response({'error': 'Amount is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -166,37 +172,74 @@ class CreateRazorpayOrderAPIView(APIView):
                 'currency': currency,
                 'payment_capture': 1,
             }
-            print(order_data)
             if receipt:
                 order_data['receipt'] = receipt
             order = razorpay_client.order.create(data=order_data)
-            print(order)
             return Response({'order': order}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class VerifyRazorpayPaymentAPIView(APIView):
-    """
-    API to verify Razorpay payment signature.
-    Expects: razorpay_order_id, razorpay_payment_id, razorpay_signature
-    """
-    def post(self, request):
-        order_id = request.data.get('razorpay_order_id')
-        payment_id = request.data.get('razorpay_payment_id')
-        signature = request.data.get('razorpay_signature')
 
-        if not (order_id and payment_id and signature):
-            return Response({'error': 'Missing parameters'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            params_dict = {
-                'razorpay_order_id': order_id,
-                'razorpay_payment_id': payment_id,
-                'razorpay_signature': signature
-            }
-            # This will raise SignatureVerificationError if verification fails
-            razorpay_client.utility.verify_payment_signature(params_dict)
-            return Response({'status': 'Payment verified'}, status=status.HTTP_200_OK)
-        except razorpay.errors.SignatureVerificationError:
-            return Response({'error': 'Payment verification failed'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def metaai_recommend(request):
+    user = request.user
+    
+    # Get User History
+    bookings = Booking.objects.select_related('movie')
+    booked_ids = bookings.values_list('movie_id', flat=True)
+    
+    history_str = ', '.join([f"{b.movie.name} ({b.movie.genre})" for b in bookings[:10]])
+
+    # Get Candidates (Unseen movies from YOUR DB)
+    candidates = Movie.objects.exclude(id__in=booked_ids).values('id', 'name', 'genre')[:50]
+    
+    if not candidates:
+        return Response({"message": "No new movies to recommend!"})
+
+    # Format candidates for the prompt
+    candidates_str = "\n".join([f"ID: {m['id']} | Title: {m['name']} | Genre: {m['genre']}" for m in candidates])
+
+    # Construct the Prompt with strict constraints
+    prompt = f"""
+    ROLE: You are a movie recommendation engine for a streaming app.
+    
+    USER HISTORY (Movies they liked):
+    {history_str}
+
+    AVAILABLE INVENTORY (You MUST pick from this list ONLY):
+    {candidates_str}
+
+    TASK:
+    Select 3 movies from the "AVAILABLE INVENTORY" that best match the user's history styles/genres.
+    
+    OUTPUT FORMAT:
+    Return a strict JSON array of objects. include the exact database ID from the list.
+    Example: [{{"id": 12, "title": "Movie Name", "reason": "Because you liked X..."}}]
+    """
+    
+
+    meta_ai = MetaAI()
+    response = meta_ai.prompt(message=prompt)
+    
+    # client = genai.Client(api_key="AIzaSyDRKT2FlcNqR9x4-pc1Gax7XhblIAsUkHs")
+    # response = client.models.generate_content(
+    # model="gemini-2.5-flash-lite", contents=prompt, config={
+    #         'response_mime_type': 'application/json'
+    #     })  
+    try:
+        # recs_data = json.loads(response.text)
+        recs_data = json.loads(response['message'])
+        
+        # Verify & Fetch (Optional but Recommended)
+        rec_ids = [item['id'] for item in recs_data]
+        recommended_movies = Movie.objects.filter(id__in=rec_ids)
+        
+        # serialize `recommended_movies` using your Serializer
+        serializer = MovieSerializer(recommended_movies, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    except Exception as e:
+        print(f"Error parsing Gemini response: {e}")
+        return Response({"error": "Recommendation failed"}, status=500)
+ 
