@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import MoviesListView, MovieDetailView, ShowsListView, SeatBooking, UserCreateView, UserListView, CustomAuthToken, UserDetailView, BookedSeatsAPIView,BookingHistoryApi,CreateRazorpayOrderAPIView
+from .views import meta_ai_response, metaai_recommend, MoviesListView, MovieDetailView, ShowsListView, SeatBooking, UserCreateView, UserListView, CustomAuthToken, UserDetailView, BookedSeatsAPIView,BookingHistoryApi,CreateRazorpayOrderAPIView
 
 urlpatterns = [
     path('movies/', MoviesListView.as_view(), name='movie-list'),
@@ -13,4 +13,6 @@ urlpatterns = [
     path('booking-history/', BookingHistoryApi.as_view(), name='booking-history'),
     path('api-token-auth/', CustomAuthToken.as_view(), name='api_token_auth'),
     path('create-razorpay-order/', CreateRazorpayOrderAPIView.as_view(), name='create-razorpay-order'),
+    path('recs-movies/', metaai_recommend, name='recs_movies'),
+    # path(' meta_ai-response/', meta_ai_response, name='meta_ai'),
     ]
