@@ -15,9 +15,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 import json
 from meta_ai_api import MetaAI
-
-
-
+from .ai_agent import agent, memory
+from dotenv import load_dotenv
+load_dotenv()
 # Razorpay client initialization
 razorpay_client = razorpay.Client(
     auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
@@ -222,7 +222,7 @@ def metaai_recommend(request):
     meta_ai = MetaAI()
     response = meta_ai.prompt(message=prompt)
     
-    # client = genai.Client(api_key="AIzaSyDRKT2FlcNqR9x4-pc1Gax7XhblIAsUkHs")
+    # client = genai.Client()
     # response = client.models.generate_content(
     # model="gemini-2.5-flash-lite", contents=prompt, config={
     #         'response_mime_type': 'application/json'
@@ -242,4 +242,22 @@ def metaai_recommend(request):
     except Exception as e:
         print(f"Error parsing Gemini response: {e}")
         return Response({"error": "Recommendation failed"}, status=500)
+    
+
+
+
+@api_view(['POST'])
+def ai_agent_test(request):
+    user_query = request.data.get('message', '')
+    
+    inputs = {
+        "messages": memory.messages + [
+            ("user", user_query)
+        ]
+    }
+
+    result = agent.invoke(inputs)
+    memory.add_user_message(user_query)
+    memory.add_ai_message(result["messages"][-1].content)
+    return Response({"reply": result["messages"][-1].content})
  
