@@ -14,5 +14,6 @@ urlpatterns = [
     path('api-token-auth/', CustomAuthToken.as_view(), name='api_token_auth'),
     path('create-razorpay-order/', CreateRazorpayOrderAPIView.as_view(), name='create-razorpay-order'),
     path('recs-movies/', metaai_recommend, name='recs_movies'),
+    path('ai_agent_test/', ai_agent_test, name='ai_agent_test'),
     # path(' meta_ai-response/', meta_ai_response, name='meta_ai'),
     ]
