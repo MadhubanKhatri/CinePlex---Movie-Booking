@@ -1,0 +1,336 @@
+.agent-widget {
+  --agent-primary: #2563eb;
+  --agent-primary-hover: #1d4ed8;
+  --agent-bg: #ffffff;
+  --agent-border: #e5e7eb;
+  --agent-text: #1f2937;
+  --agent-text-light: #6b7280;
+  --agent-user-bg: #0a0b0b;
+  --agent-agent-bg: #f3f4f6;
+}
+
+.agent-widget[data-color-scheme='dark'] {
+  --agent-primary: #3b82f6;
+  --agent-primary-hover: #2563eb;
+  --agent-bg: #1f2937;
+  --agent-border: #374151;
+  --agent-text: #f3f4f6;
+  --agent-text-light: #9ca3af;
+  --agent-user-bg: #1e40af;
+  --agent-agent-bg: #111827;
+}
+
+.agent-launcher {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--agent-primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.agent-launcher:hover {
+  background-color: var(--agent-primary-hover);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.agent-launcher:active {
+  transform: scale(0.95);
+}
+
+.agent-launcher:focus-visible {
+  outline: 2px solid var(--agent-primary);
+  outline-offset: 2px;
+}
+
+.agent-launcher.active {
+  background-color: var(--agent-primary-hover);
+}
+
+.agent-chat-window {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  width: 400px;
+  height: 600px;
+  background-color: var(--agent-bg);
+  border: 1px solid var(--agent-border);
+  border-radius: 12px;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  z-index: 10001;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.agent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--agent-border);
+  background-color: var(--agent-primary);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.agent-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.agent-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.agent-close-btn:hover {
+  transform: scale(1.1);
+}
+
+.agent-close-btn:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.agent-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agent-message {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.agent-message-user {
+  justify-content: flex-end;
+}
+
+.agent-message-agent {
+  justify-content: flex-start;
+}
+
+.agent-message-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.agent-message-user .agent-message-bubble {
+  background-color: var(--agent-user-bg);
+  color: white;
+}
+
+.agent-message-agent .agent-message-bubble {
+  background-color: var(--agent-agent-bg);
+  color: var(--agent-text);
+}
+
+.agent-message-bubble p {
+  margin: 0 0 4px 0;
+}
+
+.agent-message-time {
+  font-size: 11px;
+  opacity: 0.7;
+  display: block;
+  margin-top: 4px;
+}
+
+.agent-typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.agent-typing-indicator span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--agent-text-light);
+  animation: typingAnimation 1.4s infinite;
+}
+
+.agent-typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.agent-typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingAnimation {
+  0%,
+  60%,
+  100% {
+    opacity: 0.5;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-10px);
+  }
+}
+
+.agent-input-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--agent-border);
+}
+
+.agent-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--agent-border);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--agent-text);
+  background-color: var(--agent-bg);
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.agent-input:focus-visible {
+  outline: none;
+  border-color: var(--agent-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.agent-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.agent-send-btn {
+  padding: 8px 16px;
+  background-color: var(--agent-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.agent-send-btn:hover:not(:disabled) {
+  background-color: var(--agent-primary-hover);
+}
+
+.agent-send-btn:focus-visible {
+  outline: 2px solid var(--agent-primary);
+  outline-offset: 2px;
+}
+
+.agent-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.agent-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.agent-showtime-card {
+  background-color: var(--agent-agent-bg);
+  border: 1px solid var(--agent-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.agent-showtime-card:hover {
+  border-color: var(--agent-primary);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.agent-showtime-text {
+  margin: 0;
+  font-size: 14px;
+  color: var(--agent-text);
+  font-weight: 500;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .agent-chat-window {
+    width: calc(100% - 32px);
+    height: 70vh;
+    max-height: 600px;
+    bottom: 100px;
+    right: 16px;
+  }
+
+  .agent-launcher {
+    bottom: 16px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .agent-chat-window {
+    width: calc(100% - 16px);
+    height: 75vh;
+    max-height: 500px;
+    bottom: 80px;
+    right: 8px;
+  }
+
+  .agent-launcher {
+    bottom: 8px;
+    right: 8px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .agent-message-bubble {
+    max-width: 85%;
+  }
+}
